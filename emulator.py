@@ -2,11 +2,15 @@ import tkinter as tk #подключаю библиотеку для окна
 import getpass   # чтобы узнать имя пользователя
 import socket    # чтобы узнать имя компьютера
 import os   # чтобы читать переменные окружения
-
+import argparse   # чтобы читать параметры командной строки
 
 if "HOME" not in os.environ:
     os.environ["HOME"] = os.path.expanduser("~")
-            
+
+parser = argparse.ArgumentParser(description="Эмулятор командной строки")  # создаю «читатель» параметров
+parser.add_argument("--vfs", help="путь к папке VFS")                      # параметр 1: путь к VFS
+parser.add_argument("--script", help="путь к стартовому скрипту")          # параметр 2: путь к скрипту
+params = parser.parse_args()                                                # читаю, что передали при запуске
 
 window = tk.Tk() #создаю главное окно программы
 username = getpass.getuser()       # имя пользователя
@@ -29,6 +33,9 @@ def write(text):
     output.config(state="disabled")     # запретила
     output.see("end")    #прокрутила экран вниз, перешла к новой строке 
 
+write("Параметры запуска:")
+write("  VFS: " + str(params.vfs))
+write("  Стартовый скрипт: " + str(params.script))
 
 def expand_vars(text):
     result = "" #собрала готовый текст 
@@ -65,15 +72,17 @@ def run_command(parts):
     elif name == "cd":
         if len(args) > 1:   # больше одного аргумента — ошибка
             write("cd: слишком много аргументов")
-            return
+            return False
         write("команда: cd, аргументы: " + " ".join(args))   # вывожу имя и аргументы
     elif name == "exit":
         if len(args) > 0:   # exit вообще не принимает аргументов
             write("exit: команда не принимает аргументы")
-            return
+            return False
         window.destroy()    # закрываю окно, программа завершается
     else:                   # ни одно имя не подошло
         write(name + ": команда не найдена") 
+        return False
+    return True
 
 #если пользователь нажал Enter
 def on_enter(event):
@@ -84,5 +93,37 @@ def on_enter(event):
     run_command(parts)         # выполнила команду
 
 entry.bind("<Return>", on_enter) #<Return> это Enter
+
+def run_script(path):
+    # проверка 1: есть ли такой файл
+    if not os.path.isfile(path):
+        write("Ошибка: файл скрипта не найден: " + path)
+        return
+
+    # проверка 2: получается ли его прочитать
+    try:
+        file = open(path, encoding="utf-8")
+        lines = file.readlines()
+        file.close()
+    except UnicodeDecodeError:
+        write("Ошибка: файл скрипта не в кодировке UTF-8: " + path)
+        return
+
+    number = 0                          # номер текущей строки в файле
+    for line in lines:
+        number = number + 1             # каждую строку увеличиваю номер
+        line = line.strip()
+        if line == "" or line.startswith("#"):
+            continue
+        write("$ " + line)
+        parts = parse(line)
+        ok = run_command(parts)         # запоминаю, получилось или нет
+        if ok == False:
+            write("[скрипт] ошибка в строке " + str(number) + ", строка пропущена")
+        if parts == ["exit"]:
+            return
+
+if params.script is not None:             # если путь к скрипту передали
+    run_script(params.script)             # выполняю скрипт
 
 window.mainloop() #запустила окно программы 
