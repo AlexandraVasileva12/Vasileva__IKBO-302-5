@@ -28,14 +28,26 @@ entry.focus()                          # курсор сразу в строке
 
 
 def write(text):
-    output.config(state="normal") #разрешила писать в экран
+    output.config(state="normal") # разрешила писать в экран
     output.insert("end", text + "\n")   # пишу строку в конец экрана
     output.config(state="disabled")     # запретила
-    output.see("end")    #прокрутила экран вниз, перешла к новой строке 
+    output.see("end")    # прокрутила экран вниз, перешла к новой строке 
 
 write("Параметры запуска:")
 write("  VFS: " + str(params.vfs))
 write("  Стартовый скрипт: " + str(params.script))
+
+def load_dir(path): # папка читается с диска 
+    folder = {}                                    # пустой словарь — это будущая папка
+    for name in os.listdir(path):                  # перебираю всё, что лежит в папке на диске
+        full_path = os.path.join(path, name)       # полный путь к этому объекту
+        if os.path.isdir(full_path):               # если это папка
+            folder[name] = load_dir(full_path)     # загружаю её так же, этой же функцией
+        else:                                      # иначе это файл
+            file = open(full_path, encoding="utf-8", errors="replace")
+            folder[name] = file.read()             # кладу в словарь содержимое файла
+            file.close()
+    return folder                                  # возвращаю готовую папку-словарь
 
 def expand_vars(text):
     result = "" #собрала готовый текст 
@@ -122,6 +134,26 @@ def run_script(path):
             write("[скрипт] ошибка в строке " + str(number) + ", строка пропущена")
         if parts == ["exit"]:
             return
+
+if params.vfs is None:                             # путь к VFS не указали
+    vfs = {                                        # создаю VFS по умолчанию прямо в памяти
+        "readme.txt": "Это VFS по умолчанию\n",
+        "home": {
+            "user": {
+                "notes.txt": "Мои заметки\n"
+            }
+        }
+    }
+    write("VFS не указана, создана VFS по умолчанию")       
+elif not os.path.exists(params.vfs):               # ошибка 1: по этому пути ничего нет
+    vfs = {}
+    write("Ошибка загрузки VFS: путь не найден: " + params.vfs)
+elif not os.path.isdir(params.vfs):                # ошибка 2: это не папка
+    vfs = {}
+    write("Ошибка загрузки VFS: неверный формат, это не папка: " + params.vfs)
+else:                                              # всё хорошо, загружаю с диска
+    vfs = load_dir(params.vfs)
+    write("VFS загружена из: " + params.vfs)
 
 if params.script is not None:             # если путь к скрипту передали
     run_script(params.script)             # выполняю скрипт
