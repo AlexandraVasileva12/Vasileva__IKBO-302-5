@@ -49,6 +49,103 @@ def load_dir(path): # папка читается с диска
             file.close()
     return folder                                  # возвращаю готовую папку-словарь
 
+def current_path():
+    return "/" + "/".join(cwd)          # список ["home", "alex"] -> строка "/home/alex"
+
+def resolve_path(path):
+    if path.startswith("/"):            # путь от корня, например /home/alex
+        result = []                     # начинаю с корня
+    else:                               # путь от текущей папки, например docs или ..
+        result = list(cwd)              # начинаю с копии текущей папки
+    for piece in path.split("/"):       # режу путь на кусочки по /
+        if piece == "" or piece == ".": # пустой кусок или . (текущая папка) — ничего не делаю
+            continue
+        elif piece == "..":             # .. — подняться на уровень вверх
+            if len(result) > 0:
+                result.pop()            # убираю последнюю папку из списка
+        else:
+            result.append(piece)        # обычное имя — спускаюсь в эту папку
+    return result
+
+def get_node(parts):
+    node = vfs                          # начинаю с корня VFS
+    for name in parts:                  # иду по папкам из списка
+        if type(node) != dict or name not in node:
+            return None                 # такой папки/файла нет
+        node = node[name]               # спускаюсь на уровень ниже
+    return node                         # нашла: словарь (папка) или строка (файл)
+
+def ls(args):
+    if len(args) > 1:
+        write("ls: слишком много аргументов")
+        return False
+    if len(args) == 0:
+        target = "."                    # без аргументов — текущая папка
+    else:
+        target = args[0]
+    node = get_node(resolve_path(target))
+    if node is None:
+        write("ls: нет такого файла или каталога: " + target)
+        return False
+    if type(node) == str:               # это файл — просто пишу его имя
+        write(target)
+        return True
+    for name in sorted(node):           # это папка — пишу всё, что внутри, по алфавиту
+        if type(node[name]) == dict:
+            write(name + "/")           # папки со слешем на конце
+        else:
+            write(name)
+    return True
+
+def cd(args):
+    global cwd                          # буду менять переменную cwd, которая снаружи функции
+    if len(args) > 1:
+        write("cd: слишком много аргументов")
+        return False
+    if len(args) == 0:                  # cd без аргументов — в корень
+        cwd = []
+        return True
+    parts = resolve_path(args[0])
+    node = get_node(parts)
+    if node is None:
+        write("cd: нет такого каталога: " + args[0])
+        return False
+    if type(node) == str:
+        write("cd: это не каталог: " + args[0])
+        return False
+    cwd = parts                         # перехожу: запоминаю новую текущую папку
+    return True
+
+def echo(args):
+    write(" ".join(args))               # склеиваю аргументы через пробел и вывожу
+    return True
+
+def head(args):
+    count = 10                          # по умолчанию показываю первые 10 строк
+    if len(args) > 0 and args[0] == "-n":   # если указали сколько строк: head -n 3 файл
+        if len(args) < 2 or not args[1].isdigit():
+            write("head: после -n нужно указать число")
+            return False
+        count = int(args[1])            # превращаю текст "3" в число 3
+        args = args[2:]                 # убираю "-n" и число, остаётся имя файла
+    if len(args) == 0:
+        write("head: не указан файл")
+        return False
+    if len(args) > 1:
+        write("head: слишком много аргументов")
+        return False
+    node = get_node(resolve_path(args[0]))
+    if node is None:
+        write("head: нет такого файла: " + args[0])
+        return False
+    if type(node) == dict:
+        write("head: это каталог, а не файл: " + args[0])
+        return False
+    lines = node.splitlines()           # режу текст файла на строки
+    for line in lines[:count]:          # беру только первые count строк
+        write(line)
+    return True
+
 def expand_vars(text):
     result = "" #собрала готовый текст 
     i = 0 #номер символа, который сейчас смотрим
@@ -80,12 +177,13 @@ def run_command(parts):
     args = parts[1:]        # всё остальное, аргументы
 
     if name == "ls":
-        write("команда: ls, аргументы: " + " ".join(args)) #вывожу имя и аргументы 
+       return ls(args)
     elif name == "cd":
-        if len(args) > 1:   # больше одного аргумента — ошибка
-            write("cd: слишком много аргументов")
-            return False
-        write("команда: cd, аргументы: " + " ".join(args))   # вывожу имя и аргументы
+       return cd(args)
+    elif name == "echo":
+        return echo(args)
+    elif name == "head":
+        return head(args)
     elif name == "exit":
         if len(args) > 0:   # exit вообще не принимает аргументов
             write("exit: команда не принимает аргументы")
@@ -100,7 +198,7 @@ def run_command(parts):
 def on_enter(event):
     command = entry.get()      # взяла текст из строки ввода
     entry.delete(0, "end")     # сразу очистила строку ввода (переставила сюда)
-    write("$ " + command)      # показала, что ввели
+    write(current_path() + "$ " + command)      # показала, что ввели
     parts = parse(command)     # разбила строку
     run_command(parts)         # выполнила команду
 
@@ -127,7 +225,7 @@ def run_script(path):
         line = line.strip()
         if line == "" or line.startswith("#"):
             continue
-        write("$ " + line)
+        write(current_path() + "$ " + line)
         parts = parse(line)
         ok = run_command(parts)         # запоминаю, получилось или нет
         if ok == False:
@@ -154,6 +252,8 @@ elif not os.path.isdir(params.vfs):                # ошибка 2: это не
 else:                                              # всё хорошо, загружаю с диска
     vfs = load_dir(params.vfs)
     write("VFS загружена из: " + params.vfs)
+
+cwd = []
 
 if params.script is not None:             # если путь к скрипту передали
     run_script(params.script)             # выполняю скрипт

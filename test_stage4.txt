@@ -1,0 +1,60 @@
+# Этап 4: тест команд ls, cd, echo, head 
+
+# --- echo ---
+echo Тест этапа 4
+echo $HOME
+echo
+
+# --- ls: разные режимы ---
+ls
+ls home
+ls /home/alex
+ls home/alex/docs
+ls readme.txt
+
+# --- cd: относительный путь, .., абсолютный путь, без аргументов ---
+cd home/alex
+ls
+cd docs
+ls
+cd ..
+ls
+cd ../..
+ls
+cd /home/alex/docs
+ls ..
+cd
+ls
+
+# --- head: разные режимы ---
+head readme.txt
+head -n 3 readme.txt
+head -n 50 home/alex/notes.txt
+cd home/alex
+head docs/plan.txt
+head ../../readme.txt
+head -n 1 /home/alex/docs/plan.txt
+cd
+
+# --- ошибки ls ---
+ls nofolder
+ls home readme.txt
+
+# --- ошибки cd ---
+cd nofolder
+cd readme.txt
+cd home docs
+
+# --- ошибки head ---
+head
+head nofile.txt
+head home
+head -n abc readme.txt
+head -n
+head readme.txt home/alex/notes.txt
+
+# --- прочие ошибки ---
+hello
+exit 1
+
+echo Тест этапа 4 завершён
