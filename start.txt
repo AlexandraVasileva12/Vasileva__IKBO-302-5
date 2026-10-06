@@ -1,9 +1,0 @@
-# стартовый скрипт: проверка всех команд
-ls
-ls -l /home
-cd $HOME
-
-hello
-cd a b
-exit 5
-cd docs

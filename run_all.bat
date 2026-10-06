@@ -1,11 +1,10 @@
-@echo off 
+@echo off
 chcp 65001 > nul
-cd /d "%~dp0" 
+cd /d "%~dp0"
 
-echo Тест 4: оба параметра
-python emulator.py --vfs "%~dp0vfs" --script start.txt
+echo Параметры VFS и стартового скрипта
+python src\emulator.py --vfs vfs --script tests\scripts\start.txt
 
-echo Тест 5: оба параметра в другом порядке
-python emulator.py --script start.txt --vfs "%~dp0vfs"
-
+echo Параметры в другом порядке
+python src\emulator.py --script tests\scripts\start.txt --vfs vfs
 pause

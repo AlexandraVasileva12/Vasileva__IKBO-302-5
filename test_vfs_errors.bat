@@ -2,13 +2,12 @@
 chcp 65001 > nul
 cd /d "%~dp0"
 
-echo VFS не указана: VFS по умолчанию
-python emulator.py
+echo VFS по умолчанию
+python src\emulator.py
 
-echo VFS: папка не существует
-python emulator.py --vfs novfs
+echo Ошибка: папка VFS не существует
+python src\emulator.py --vfs no_vfs
 
-echo VFS: вместо папки файл 
-python emulator.py --vfs start.txt
-
+echo Ошибка: вместо папки VFS передан файл
+python src\emulator.py --vfs tests\scripts\start.txt
 pause

@@ -2,7 +2,6 @@
 chcp 65001 > nul
 cd /d "%~dp0"
 
-echo Тест 3: только стартовый скрипт
-python emulator.py --script start.txt
-
+echo Запуск со стартовым скриптом
+python src\emulator.py --script tests\scripts\start.txt
 pause

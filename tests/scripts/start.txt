@@ -1,0 +1,16 @@
+# Проверка этапов 1-3
+
+echo Стартовый скрипт запущен
+echo $HOME
+ls
+cd home
+ls
+cd ..
+
+# Ошибочные строки должны быть пропущены
+ls nofolder
+cd readme.txt
+unknown_command
+exit with_argument
+
+echo Скрипт продолжил работу после ошибок

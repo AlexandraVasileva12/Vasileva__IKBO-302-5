@@ -1,0 +1,49 @@
+# Проверка этапа 4: ls, cd, echo и head
+
+echo Тест этапа 4
+echo $HOME
+echo
+
+# ls: корень, папка и файл
+ls
+ls home
+ls /home/alex
+ls readme.txt
+
+# cd: относительный, абсолютный путь, .. и переход в корень
+cd home/alex
+ls
+cd ..
+ls
+cd /home/alex/docs
+ls
+cd
+ls
+
+# head: режим по умолчанию и режим -n
+head readme.txt
+head -n 3 readme.txt
+head -n 1 /home/alex/notes.txt
+
+# Ошибки ls
+ls nofolder
+ls home readme.txt
+
+# Ошибки cd
+cd nofolder
+cd readme.txt
+cd home docs
+
+# Ошибки head
+head
+head nofile.txt
+head home
+head -n abc readme.txt
+head -n
+head readme.txt home/alex/notes.txt
+
+# Общие ошибки
+unknown_command
+exit with_argument
+
+echo Тест этапа 4 завершён

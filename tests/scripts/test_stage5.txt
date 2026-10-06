@@ -1,0 +1,34 @@
+# Проверка этапа 5: mkdir меняет VFS только в памяти
+
+echo Тест этапа 5
+ls
+
+# Относительный путь из корня
+mkdir projects
+ls
+
+# Вложенный относительный путь
+mkdir home/alex/study
+ls home/alex
+
+# Путь из текущего каталога
+cd home/alex
+mkdir drafts
+ls
+
+# Абсолютный путь
+mkdir /home/alex/archive
+ls
+cd
+ls home/alex
+
+# Ошибки mkdir
+mkdir
+mkdir one two
+mkdir projects
+mkdir readme.txt
+mkdir nofolder/new_folder
+mkdir readme.txt/new_folder
+mkdir /
+
+echo Тест этапа 5 завершён
